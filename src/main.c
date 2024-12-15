@@ -23,6 +23,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     #define ABOUT 256
     #define SAVE 129
     #define OPEN 130
+    #define NEW_FILE 131
     HMENU menu = CreateMenu();
     HMENU file = CreateMenu();
     HMENU help = CreateMenu();
@@ -30,6 +31,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AppendMenu(menu, MF_POPUP, (UINT_PTR)file, "filez");
     AppendMenu(menu, MF_POPUP, (UINT_PTR)help, "hlep");
 
+    AppendMenu(file, MF_STRING, NEW_FILE, "new file");
+    AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, OPEN, "open");
     AppendMenu(file, MF_STRING, SAVE, "save");
     AppendMenu(file, MF_STRING, EXIT, "exitearino");
@@ -93,11 +96,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    static HBITMAP hBitmap = NULL;
+    static HDC hMemDC = NULL;
+
     switch (msg) {
         case WM_CLOSE:
             DestroyWindow(hwnd);
             break;
         case WM_DESTROY:
+            if (hBitmap) {
+                DeleteObject(hBitmap);
+                hBitmap = NULL;
+            }
             PostQuitMessage(0);
             break;
         case WM_COMMAND:
@@ -169,23 +179,49 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         }
                     }
                     break;
+                case NEW_FILE:
+                    SetWindowText(hEdit, "");
+                    break;
             }
             break;
         case WM_TIMER:
-            InvalidateRect(hwnd, NULL, TRUE);
+            InvalidateRect(hwnd, NULL, FALSE);
             break;
         case WM_PAINT:
+            if (!hMemDC) {
+                hMemDC = CreateCompatibleDC(NULL);
+                hBitmap = CreateCompatibleBitmap(GetDC(hwnd), LOWORD(lParam), HIWORD(lParam));
+                SelectObject(hMemDC, hBitmap);
+            }
             {
                 PAINTSTRUCT ps;
                 HDC hdc = BeginPaint(hwnd, &ps);
-                HBRUSH hBrush = CreateSolidBrush(RGB(173, 216, 230));
-                FillRect(hdc, &ps.rcPaint, hBrush);
+
+                BitBlt(hMemDC, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdc, 0, 0, SRCCOPY);
+
+                HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
+                FillRect(hMemDC, &ps.rcPaint, hBrush);
                 DeleteObject(hBrush);
+
+                SetWindowOrgEx(hMemDC, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
+                // Your custom drawing operations can go here
+
+                BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, hMemDC, 0, 0, SRCCOPY);
+
                 EndPaint(hwnd, &ps);
             }
             break;
         case WM_SIZE:
             if (wParam != SIZE_MINIMIZED) {
+                if (hBitmap) {
+                    DeleteObject(hBitmap);
+                }
+                if (hMemDC) {
+                    DeleteDC(hMemDC);
+                }
+                hMemDC = CreateCompatibleDC(NULL);
+                hBitmap = CreateCompatibleBitmap(GetDC(hwnd), LOWORD(lParam), HIWORD(lParam));
+                SelectObject(hMemDC, hBitmap);
                 MoveWindow(hEdit, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
             }
             break;
@@ -194,3 +230,4 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     }
     return 0;
 }
+
