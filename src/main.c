@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <commdlg.h>  // For file dialogs
 #include <stdio.h>    // For FILE structure and file handling
+#include <stdbool.h> 
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -24,19 +25,27 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     #define SAVE 129
     #define OPEN 130
     #define NEW_FILE 131
+    #define EDIT 257  // New menu identifier for Edit menu
+    #define TOGGLE_WRAP 258  // Identifier for the toggle word wrap option
+
     HMENU menu = CreateMenu();
     HMENU file = CreateMenu();
+    HMENU edit = CreateMenu();  // Create Edit menu
     HMENU help = CreateMenu();
+    
 
     AppendMenu(menu, MF_POPUP, (UINT_PTR)file, "filez");
+    AppendMenu(menu, MF_POPUP, (UINT_PTR)edit, "edita");
     AppendMenu(menu, MF_POPUP, (UINT_PTR)help, "hlep");
 
     AppendMenu(file, MF_STRING, NEW_FILE, "new file");
     AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, OPEN, "open");
     AppendMenu(file, MF_STRING, SAVE, "save");
+    AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, EXIT, "exitearino");
     AppendMenu(help, MF_STRING, ABOUT, "abaut");
+    AppendMenu(edit, MF_STRING, TOGGLE_WRAP, "word wrap");
 
     // Create the window
     HWND hwnd = CreateWindowEx(
@@ -98,6 +107,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     static HBITMAP hBitmap = NULL;
     static HDC hMemDC = NULL;
+    static bool wordWrap = true;  // Word wrap state
 
     switch (msg) {
         case WM_CLOSE:
@@ -112,6 +122,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             break;
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
+                case TOGGLE_WRAP:
+                    wordWrap = !wordWrap;
+                    if (wordWrap) {
+                        SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Enable word wrap
+                    } else {
+                        SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Disable word wrap
+                    }
+                    break;
                 case EXIT:
                     PostQuitMessage(0);
                     break;
@@ -157,24 +175,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         ofn.hwndOwner = hwnd;
                         ofn.lpstrFile = szFile;
                         ofn.lpstrFile[0] = '\0';
-                        ofn.nMaxFile = sizeof(szFile);  // Correct field
+                        ofn.nMaxFile = sizeof(szFile);  
                         ofn.lpstrFilter = "Text Files\0*.txt\0";
-                        ofn.lpstrFileTitle = NULL;
-                        ofn.lpstrInitialDir = NULL;
                         ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
                         if (GetOpenFileName(&ofn)) {
-                            FILE *file = fopen(ofn.lpstrFile, "r");
-                            if (file) {
-                                fseek(file, 0, SEEK_END);
-                                int len = ftell(file);
-                                fseek(file, 0, SEEK_SET);
-                                CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
-                                fread(text, sizeof(CHAR), len, file);
-                                text[len] = '\0';
+                            HANDLE file = CreateFile(ofn.lpstrFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                            if (file != INVALID_HANDLE_VALUE) {
+                                DWORD bytesRead;
+                                DWORD fileSize = GetFileSize(file, NULL);
+                                CHAR *text = (CHAR *)HeapAlloc(GetProcessHeap(), 0, (fileSize + 1) * sizeof(CHAR));
+                                ReadFile(file, text, fileSize, &bytesRead, NULL);
+                                text[fileSize] = '\0';  // Null-terminate
                                 SetWindowText(hEdit, text);
-                                fclose(file);
-                                GlobalFree(text);
+                                HeapFree(GetProcessHeap(), 0, text);
+                                CloseHandle(file);
                             }
                         }
                     }
