@@ -47,7 +47,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AppendMenu(file, MF_STRING, SAVE, "save");
     AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, EXIT, "exitearino");
-    AppendMenu(help, MF_STRING, ABOUT, "help topicals...");
+    AppendMenu(help, MF_STRING, HELP_TOPICS, "help topicals...");
     AppendMenu(help, MF_STRING, ABOUT, "abaut");
     AppendMenu(edit, MF_STRING, CHANGE_FONT, "fonter");
     AppendMenu(edit, MF_STRING, TOGGLE_WRAP, "word wrap");
@@ -58,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         "boinkorwindow",
         "boinkor",
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, 420, 300,
+        CW_USEDEFAULT, CW_USEDEFAULT, 700, 400,
         NULL, menu, hInstance, NULL
     );
 
@@ -293,14 +293,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                                         WriteFile(hFile, pResData, resSize, &bytesWritten, NULL);
                                         CloseHandle(hFile);
 
-                                        // Open the CHM file
-                                        ShellExecute(hwnd, TEXT("open"), tempFile, NULL, NULL, SW_SHOWNORMAL);
+                                        // Rename .tmp to .chm
+                                        TCHAR newFilePath[MAX_PATH];
+                                        wsprintf(newFilePath, TEXT("%s.chm"), tempFile);
+                                        if (MoveFile(tempFile, newFilePath)) {
+                                            // Open the CHM file
+                                            ShellExecute(hwnd, TEXT("open"), newFilePath, NULL, NULL, SW_SHOWNORMAL);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
                     break;
+
             }
             break;
         case WM_SIZE:
