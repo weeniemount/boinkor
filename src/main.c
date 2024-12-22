@@ -134,7 +134,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     PostQuitMessage(0);
                     break;
                 case ABOUT:
-                    MessageBox(hwnd, "the bestest textiest editorium of all time\n made by boink to boink", "abaut boinkor", MB_OK);
+                    MessageBox(hwnd, "the bestest textiest editorium of all time\nmade by boinkwer to boink", "abaut boinkor", MB_OK | MB_ICONINFORMATION);
                     break;
                 case SAVE:
                     {
@@ -176,7 +176,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         ofn.lpstrFile = szFile;
                         ofn.lpstrFile[0] = '\0';
                         ofn.nMaxFile = sizeof(szFile);  
-                        ofn.lpstrFilter = "Text Files\0*.txt\0";
                         ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
                         if (GetOpenFileName(&ofn)) {
@@ -219,7 +218,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 DeleteObject(hBrush);
 
                 SetWindowOrgEx(hMemDC, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
-                // Your custom drawing operations can go here
 
                 BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, hMemDC, 0, 0, SRCCOPY);
 
