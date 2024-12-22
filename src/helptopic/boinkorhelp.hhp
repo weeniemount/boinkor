@@ -1,0 +1,14 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=boinkorhelp.chm
+Contents file=boinkorhelp.hhc
+Default font=,8,0
+Default topic=
+Full-text search=Yes
+Index file=boinkorhelp.hhk
+Language=0x409 English (United States)
+Title=boinkorhelp
+
+[FILES]
+interaduction.html
+wordwrep.html

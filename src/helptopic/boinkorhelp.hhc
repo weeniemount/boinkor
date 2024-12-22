@@ -1,0 +1,30 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<HTML>
+<HEAD>
+<meta name="GENERATOR" content="Microsoft&reg; HTML Help Workshop 4.1">
+<!-- Sitemap 1.0 -->
+</HEAD>
+<BODY>
+<OBJECT type="text/site properties">
+  <param name="FrameName" value="right">
+  <param name="Font" value=",8,0">
+  <param name="ImageType" value="Book">
+  <param name="Window Styles" value="0x27">
+  <param name="ExWindow Styles" value="0x0">
+</OBJECT>
+<UL>
+<LI><OBJECT type="text/sitemap">
+  <param name="Name" value="boinkor">
+  <param name="Local" value="interaduction.html">
+  <param name="ImageNumber" value="1">
+</OBJECT>
+<UL>
+<LI><OBJECT type="text/sitemap">
+  <param name="Name" value="word wrep">
+  <param name="Local" value="wordwrep.html">
+  <param name="ImageNumber" value="11">
+</OBJECT>
+</UL>
+</UL>
+</BODY>
+</HTML>
