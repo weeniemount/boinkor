@@ -27,6 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     #define NEW_FILE 131
     #define EDIT 257  // New menu identifier for Edit menu
     #define TOGGLE_WRAP 258  // Identifier for the toggle word wrap option
+    #define CHANGE_FONT 259
 
     HMENU menu = CreateMenu();
     HMENU file = CreateMenu();
@@ -45,6 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, EXIT, "exitearino");
     AppendMenu(help, MF_STRING, ABOUT, "abaut");
+    AppendMenu(edit, MF_STRING, CHANGE_FONT, "fonter");
     AppendMenu(edit, MF_STRING, TOGGLE_WRAP, "word wrap");
 
     // Create the window
@@ -70,7 +72,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         return -1;
     }
 
-    SetTimer(hwnd, 1, 1000, NULL);  // Timer ID 1, 1000 ms interval
+    //SetTimer(hwnd, 1, 1000, NULL);  // Timer ID 1, 1000 ms interval no timar needed nop more
 
     // Set font for the edit control
     HFONT hFont = CreateFont(
@@ -107,6 +109,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     static HBITMAP hBitmap = NULL;
     static HDC hMemDC = NULL;
+    static HFONT hPrevFont = NULL;  // To store the previous font
     static bool wordWrap = true;  // Word wrap state
 
     switch (msg) {
@@ -123,11 +126,64 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case TOGGLE_WRAP:
-                    wordWrap = !wordWrap;
                     if (wordWrap) {
                         SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Enable word wrap
                     } else {
                         SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Disable word wrap
+                    }
+                    wordWrap = !wordWrap;
+
+                    if (hPrevFont) {
+                        DeleteObject(hPrevFont);  // Cleanup old font
+                    }
+                    
+                    // Retrieve current font
+                    hPrevFont = (HFONT)SendMessage(hEdit, WM_GETFONT, 0, 0);
+
+                    // Get the current text
+                    int len = GetWindowTextLength(hEdit);
+                    CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
+                    GetWindowText(hEdit, text, len + 1);
+
+                    // Create a new edit control with the same content and font
+                    HWND hNewEdit = CreateWindowEx(
+                        0,
+                        "EDIT",
+                        text,
+                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN,
+                        0, 0, 0, 0,
+                        hwnd, NULL, GetModuleHandle(NULL), NULL
+                    );
+
+                    if (hNewEdit) {
+                        SendMessage(hNewEdit, WM_SETFONT, (WPARAM)hPrevFont, TRUE);
+                        SetWindowPos(hEdit, hNewEdit, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
+                        DestroyWindow(hNewEdit);  // Remove the temporary new control
+                    }
+
+                    GlobalFree(text);
+                    break;
+                case CHANGE_FONT:
+                    CHOOSEFONT cf;  // Structure for font dialog
+                    LOGFONT lf = {0};  // Initialize a LOGFONT structure
+                    
+                    // Get the current font from the edit control
+                    HFONT hCurrentFont = (HFONT)SendMessage(hEdit, WM_GETFONT, 0, 0);
+                    if (hCurrentFont) {
+                        GetObject(hCurrentFont, sizeof(LOGFONT), &lf);  // Get font properties
+                    }
+
+                    ZeroMemory(&cf, sizeof(CHOOSEFONT));
+                    cf.lStructSize = sizeof(CHOOSEFONT);
+                    cf.hwndOwner = hwnd;
+                    cf.lpLogFont = &lf;
+                    cf.Flags = CF_SCREENFONTS | CF_EFFECTS | CF_INITTOLOGFONTSTRUCT;
+
+                    if (ChooseFont(&cf)) {
+                        HFONT hNewFont = CreateFontIndirect(&lf);
+                        if (hNewFont) {
+                            SendMessage(hEdit, WM_SETFONT, (WPARAM)hNewFont, TRUE);  // Set the new font
+                        }
                     }
                     break;
                 case EXIT:

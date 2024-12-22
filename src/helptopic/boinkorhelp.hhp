@@ -7,8 +7,10 @@ Default topic=
 Full-text search=Yes
 Index file=boinkorhelp.hhk
 Language=0x409 English (United States)
-Title=boinkorhelp
+Title=boinkor help tropicals
 
 [FILES]
 interaduction.html
+editmenu.html
+fonter.html
 wordwrep.html
