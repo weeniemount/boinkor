@@ -1,4 +1,4 @@
 *.exe
 /*.exe
-icon.o
-*/icon.o
+resource.o
+*/resource.o
