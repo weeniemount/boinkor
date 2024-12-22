@@ -198,32 +198,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     break;
             }
             break;
-        case WM_TIMER:
-            InvalidateRect(hwnd, NULL, FALSE);
-            break;
-        case WM_PAINT:
-            if (!hMemDC) {
-                hMemDC = CreateCompatibleDC(NULL);
-                hBitmap = CreateCompatibleBitmap(GetDC(hwnd), LOWORD(lParam), HIWORD(lParam));
-                SelectObject(hMemDC, hBitmap);
-            }
-            {
-                PAINTSTRUCT ps;
-                HDC hdc = BeginPaint(hwnd, &ps);
-
-                BitBlt(hMemDC, 0, 0, ps.rcPaint.right, ps.rcPaint.bottom, hdc, 0, 0, SRCCOPY);
-
-                HBRUSH hBrush = CreateSolidBrush(RGB(255, 255, 255));
-                FillRect(hMemDC, &ps.rcPaint, hBrush);
-                DeleteObject(hBrush);
-
-                SetWindowOrgEx(hMemDC, -ps.rcPaint.left, -ps.rcPaint.top, NULL);
-
-                BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top, ps.rcPaint.right, ps.rcPaint.bottom, hMemDC, 0, 0, SRCCOPY);
-
-                EndPaint(hwnd, &ps);
-            }
-            break;
         case WM_SIZE:
             if (wParam != SIZE_MINIMIZED) {
                 if (hBitmap) {
