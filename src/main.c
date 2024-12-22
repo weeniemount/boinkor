@@ -183,16 +183,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                             if (file != INVALID_HANDLE_VALUE) {
                                 DWORD bytesRead;
                                 DWORD fileSize = GetFileSize(file, NULL);
-                                CHAR *text = (CHAR *)HeapAlloc(GetProcessHeap(), 0, (fileSize + 1) * sizeof(CHAR));
-                                ReadFile(file, text, fileSize, &bytesRead, NULL);
-                                text[fileSize] = '\0';  // Null-terminate
-                                SetWindowText(hEdit, text);
-                                HeapFree(GetProcessHeap(), 0, text);
+                                CHAR *rawText = (CHAR *)HeapAlloc(GetProcessHeap(), 0, (fileSize + 1) * sizeof(CHAR));
+                                CHAR *processedText = (CHAR *)HeapAlloc(GetProcessHeap(), 0, (fileSize * 2 + 1) * sizeof(CHAR)); // Allocate extra space for `\r\n`
+                                if (rawText && processedText) {
+                                    ReadFile(file, rawText, fileSize, &bytesRead, NULL);
+                                    rawText[fileSize] = '\0';  // Null-terminate
+                                    
+                                    // Process line breaks
+                                    CHAR *src = rawText;
+                                    CHAR *dst = processedText;
+                                    while (*src) {
+                                        if (*src == '\n') {
+                                            *dst++ = '\r';
+                                            *dst++ = '\n';
+                                        } else if (*src == '\r' && *(src + 1) != '\n') {
+                                            *dst++ = '\r';
+                                            *dst++ = '\n';
+                                        } else {
+                                            *dst++ = *src;
+                                        }
+                                        src++;
+                                    }
+                                    *dst = '\0'; // Null-terminate
+
+                                    SetWindowText(hEdit, processedText);
+                                }
+                                HeapFree(GetProcessHeap(), 0, rawText);
+                                HeapFree(GetProcessHeap(), 0, processedText);
                                 CloseHandle(file);
                             }
                         }
                     }
                     break;
+
                 case NEW_FILE:
                     SetWindowText(hEdit, "");
                     break;
