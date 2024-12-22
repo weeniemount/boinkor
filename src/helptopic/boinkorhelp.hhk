@@ -6,7 +6,7 @@
 </HEAD>
 <BODY>
 <OBJECT type="text/site properties">
-  <param name="Font" value=",8,0">
+  <param name="font" value=",8,0">
 </OBJECT>
 <UL>
 </UL>

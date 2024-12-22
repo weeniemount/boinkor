@@ -2,6 +2,7 @@
 #include <commdlg.h>  // For file dialogs
 #include <stdio.h>    // For FILE structure and file handling
 #include <stdbool.h> 
+#include "resource/resource.h" 
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -28,6 +29,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     #define EDIT 257  // New menu identifier for Edit menu
     #define TOGGLE_WRAP 258  // Identifier for the toggle word wrap option
     #define CHANGE_FONT 259
+    #define HELP_TOPICS 260
 
     HMENU menu = CreateMenu();
     HMENU file = CreateMenu();
@@ -45,6 +47,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AppendMenu(file, MF_STRING, SAVE, "save");
     AppendMenu(file, MF_SEPARATOR, 0, NULL);  // Divider
     AppendMenu(file, MF_STRING, EXIT, "exitearino");
+    AppendMenu(help, MF_STRING, ABOUT, "help topicals...");
     AppendMenu(help, MF_STRING, ABOUT, "abaut");
     AppendMenu(edit, MF_STRING, CHANGE_FONT, "fonter");
     AppendMenu(edit, MF_STRING, TOGGLE_WRAP, "word wrap");
@@ -126,31 +129,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case TOGGLE_WRAP:
-                    if (wordWrap) {
-                        SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Enable word wrap
-                    } else {
-                        SendMessage(hEdit, EM_SETWORDBREAKPROC, 0, (LPARAM)(LRESULT)NULL);  // Disable word wrap
-                    }
                     wordWrap = !wordWrap;
 
+                    // Get current font from the edit control
                     if (hPrevFont) {
-                        DeleteObject(hPrevFont);  // Cleanup old font
+                        DeleteObject(hPrevFont);  // Clean up old font
                     }
-                    
-                    // Retrieve current font
                     hPrevFont = (HFONT)SendMessage(hEdit, WM_GETFONT, 0, 0);
 
-                    // Get the current text
+                    // Get the current text length
                     int len = GetWindowTextLength(hEdit);
                     CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
                     GetWindowText(hEdit, text, len + 1);
 
-                    // Create a new edit control with the same content and font
+                    // Create a new edit control with updated word wrap setting
                     HWND hNewEdit = CreateWindowEx(
                         0,
                         "EDIT",
                         text,
-                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | ES_WANTRETURN,
+                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | (wordWrap ? ES_WANTRETURN : 0),
                         0, 0, 0, 0,
                         hwnd, NULL, GetModuleHandle(NULL), NULL
                     );
@@ -274,6 +271,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
                 case NEW_FILE:
                     SetWindowText(hEdit, "");
+                    break;
+                case HELP_TOPICS:
+                    {
+                        HRSRC hResInfo = FindResource(NULL, MAKEINTRESOURCE(INT_HELPCHM), RT_RCDATA);
+                        if (hResInfo) {
+                            HGLOBAL hRes = LoadResource(NULL, hResInfo);
+                            if (hRes) {
+                                DWORD resSize = SizeofResource(NULL, hResInfo);
+                                LPVOID pResData = LockResource(hRes);
+
+                                if (pResData) {
+                                    TCHAR tempPath[MAX_PATH];
+                                    GetTempPath(MAX_PATH, tempPath);
+                                    TCHAR tempFile[MAX_PATH];
+                                    GetTempFileName(tempPath, TEXT("CHM"), 0, tempFile);
+
+                                    HANDLE hFile = CreateFile(tempFile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_TEMPORARY, NULL);
+                                    if (hFile != INVALID_HANDLE_VALUE) {
+                                        DWORD bytesWritten;
+                                        WriteFile(hFile, pResData, resSize, &bytesWritten, NULL);
+                                        CloseHandle(hFile);
+
+                                        // Open the CHM file
+                                        ShellExecute(hwnd, TEXT("open"), tempFile, NULL, NULL, SW_SHOWNORMAL);
+                                    }
+                                }
+                            }
+                        }
+                    }
                     break;
             }
             break;
