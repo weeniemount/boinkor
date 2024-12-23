@@ -34,15 +34,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     #define TOGGLE_WRAP 258  // Identifier for the toggle word wrap option
     #define CHANGE_FONT 259
     #define HELP_TOPICS 260
+    #define STATUS_BAR 261
 
     HMENU menu = CreateMenu();
     HMENU file = CreateMenu();
-    HMENU edit = CreateMenu();  // Create Edit menu
+    HMENU edit = CreateMenu();
+    HMENU view = CreateMenu();  // Create Edit menu
     HMENU help = CreateMenu();
     
 
     AppendMenu(menu, MF_POPUP, (UINT_PTR)file, "filez");
     AppendMenu(menu, MF_POPUP, (UINT_PTR)edit, "edita");
+    AppendMenu(menu, MF_POPUP, (UINT_PTR)view, "view");
     AppendMenu(menu, MF_POPUP, (UINT_PTR)help, "hlep");
 
     AppendMenu(file, MF_STRING, NEW_FILE, "new file");
@@ -54,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     AppendMenu(help, MF_STRING, HELP_TOPICS, "help topicals...");
     AppendMenu(help, MF_STRING, ABOUT, "abaut");
     AppendMenu(edit, MF_STRING, CHANGE_FONT, "fonter");
-    AppendMenu(edit, MF_STRING, TOGGLE_WRAP, "word wrap");
+    AppendMenu(view, MF_STRING, TOGGLE_WRAP, "word wrap");
 
     // Create the window
     HWND hwnd = CreateWindowEx(
@@ -127,6 +130,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 0, 0, 0, 0,
                 hwnd, NULL, GetModuleHandle(NULL), NULL
             );
+            SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)"chalacters: 0");  // Update status bar
             break;
         case WM_CLOSE:
             DestroyWindow(hwnd);
