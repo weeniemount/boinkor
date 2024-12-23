@@ -3,12 +3,16 @@
 #include <stdio.h>    // For FILE structure and file handling
 #include <stdbool.h> 
 #include "resource/resource.h" 
+#include <commctrl.h>  // Include for status bar
+
 
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 HWND hEdit;  // Declare hEdit globally
+HWND hStatusBar;  // Declare status bar
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    InitCommonControls();
     WNDCLASS wc = {0};
     wc.lpfnWndProc = WndProc;
     wc.hInstance = hInstance;
@@ -116,6 +120,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     static bool wordWrap = true;  // Word wrap state
 
     switch (msg) {
+        case WM_CREATE:
+            hStatusBar = CreateWindowEx(
+                0, STATUSCLASSNAME, NULL,
+                WS_CHILD | WS_VISIBLE | SBARS_SIZEGRIP,
+                0, 0, 0, 0,
+                hwnd, NULL, GetModuleHandle(NULL), NULL
+            );
+            break;
         case WM_CLOSE:
             DestroyWindow(hwnd);
             break;
@@ -127,6 +139,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             PostQuitMessage(0);
             break;
         case WM_COMMAND:
+            if (HIWORD(wParam) == EN_UPDATE) {  // Check if edit control was updated
+                int len = GetWindowTextLength(hEdit);  // Get character count
+                char statusText[256];
+                sprintf(statusText, "chalacters: %d", len);
+                SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)statusText);  // Update status bar
+            }
             switch (LOWORD(wParam)) {
                 case TOGGLE_WRAP:
                     {
@@ -170,9 +188,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         if (hCurrentFont) {
                             SendMessage(hEdit, WM_SETFONT, (WPARAM)hCurrentFont, TRUE);
                         }
-
                         // Refresh the window
                         InvalidateRect(hwnd, NULL, TRUE);
+                        
+                        SendMessage(hStatusBar, WM_SIZE, 0, 0);  // Resize the status bar
                     }
                     break;
 
@@ -290,7 +309,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         }
                     }
                     break;
-
                 case NEW_FILE:
                     SetWindowText(hEdit, "");
                     break;
@@ -343,6 +361,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 hBitmap = CreateCompatibleBitmap(GetDC(hwnd), LOWORD(lParam), HIWORD(lParam));
                 SelectObject(hMemDC, hBitmap);
                 MoveWindow(hEdit, 0, 0, LOWORD(lParam), HIWORD(lParam), TRUE);
+                MoveWindow(hEdit, 0, 0, LOWORD(lParam), HIWORD(lParam) - 20, TRUE); // Adjust for status bar height
+                SendMessage(hStatusBar, WM_SIZE, 0, 0);  // Resize the status bar
             }
             break;
         default:

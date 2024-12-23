@@ -6,4 +6,4 @@ del resource.o
 windres resource.rc -o resource.o
 cd ..
 cd ..
-gcc src/main.c src/resource/resource.o -lgdi32 -luser32 -lcomdlg32 -mwindows -o boinkor.exe && boinkor.exe
+gcc src/main.c src/resource/resource.o -lgdi32 -luser32 -lcomdlg32 -lcomctl32 -mwindows -o boinkor.exe && boinkor.exe
