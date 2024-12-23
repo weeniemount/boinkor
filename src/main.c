@@ -190,30 +190,36 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     MessageBox(hwnd, "the bestest textiest editorium of all time\nmade by boinkwer to boink", "abaut boinkor", MB_OK | MB_ICONINFORMATION);
                     break;
                 case SAVE:
-                    {
-                        OPENFILENAME ofn;
-                        CHAR szFile[260] = {0};
+                    OPENFILENAME ofn = {0};
+                    CHAR szFile[MAX_PATH] = {0};
 
-                        ZeroMemory(&ofn, sizeof(ofn));
-                        ofn.lStructSize = sizeof(ofn);
-                        ofn.hwndOwner = hwnd;
-                        ofn.lpstrFile = szFile;
-                        ofn.lpstrFile[0] = '\0';
-                        ofn.nMaxFile = sizeof(szFile);  // Correct field
-                        ofn.lpstrFilter = "Text Files\0*.txt\0";
-                        ofn.lpstrFileTitle = NULL;
-                        ofn.lpstrInitialDir = NULL;
-                        ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+                    ofn.lStructSize = sizeof(OPENFILENAME);
+                    ofn.hwndOwner = GetActiveWindow();
+                    ofn.lpstrFile = szFile;
+                    ofn.lpstrFile[0] = '\0';
+                    ofn.nMaxFile = sizeof(szFile);
+                    ofn.lpstrFilter = "Text Files\0*.txt\0";
+                    ofn.lpstrFileTitle = NULL;
+                    ofn.lpstrInitialDir = NULL;
+                    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_OVERWRITEPROMPT;
+                    ofn.lpstrDefExt = "txt";
 
-                        if (GetSaveFileName(&ofn)) {
-                            FILE *file = fopen(ofn.lpstrFile, "w");
-                            if (file) {
-                                int len = GetWindowTextLength(hEdit);
-                                CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
+                    if (GetSaveFileName(&ofn)) {
+                        FILE *file = fopen(ofn.lpstrFile, "wb, ccs=UTF-8"); // Using UTF-8 encoding
+                        if (file) {
+                            int len = GetWindowTextLength(hEdit);
+                            CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
+                            if (text) {
                                 GetWindowText(hEdit, text, len + 1);
+
+                                // Writing UTF-8 encoded text
                                 fwrite(text, sizeof(CHAR), len, file);
+
                                 fclose(file);
                                 GlobalFree(text);
+                            }
+                            else {
+                                fclose(file);
                             }
                         }
                     }
