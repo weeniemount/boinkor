@@ -174,7 +174,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     cf.lStructSize = sizeof(CHOOSEFONT);
                     cf.hwndOwner = hwnd;
                     cf.lpLogFont = &lf;
-                    cf.Flags = CF_SCREENFONTS | CF_EFFECTS | CF_INITTOLOGFONTSTRUCT;
+                    cf.Flags = CF_SCREENFONTS | CF_INITTOLOGFONTSTRUCT;
 
                     if (ChooseFont(&cf)) {
                         HFONT hNewFont = CreateFontIndirect(&lf);
