@@ -129,37 +129,53 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_COMMAND:
             switch (LOWORD(wParam)) {
                 case TOGGLE_WRAP:
-                    wordWrap = !wordWrap;
+                    {
+                        wordWrap = !wordWrap; // Toggle word wrap state
 
-                    // Get current font from the edit control
-                    if (hPrevFont) {
-                        DeleteObject(hPrevFont);  // Clean up old font
+                        // Get current window size
+                        RECT rect;
+                        GetClientRect(hwnd, &rect);
+
+                        // Save the current text
+                        int len = GetWindowTextLength(hEdit);
+                        CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
+                        if (text) {
+                            GetWindowText(hEdit, text, len + 1);
+                        }
+
+                        // get current font
+                        HFONT hCurrentFont = (HFONT)SendMessage(hEdit, WM_GETFONT, 0, 0);
+                        // Destroy the old edit control
+                        DestroyWindow(hEdit);
+
+                        // Create the new edit control with updated styles
+                        hEdit = CreateWindowEx(
+                            0,
+                            "EDIT",
+                            NULL,
+                            WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER |
+                                ES_MULTILINE | ES_WANTRETURN |
+                                (wordWrap ? 0 : (WS_HSCROLL | ES_AUTOHSCROLL)),
+                            rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                            hwnd, NULL, GetModuleHandle(NULL), NULL
+                        );
+
+                        // Restore the text to the new edit control
+                        if (text) {
+                            SetWindowText(hEdit, text);
+                            GlobalFree(text);
+                        }
+
+                        // Apply the font to the new control
+                        if (hCurrentFont) {
+                            SendMessage(hEdit, WM_SETFONT, (WPARAM)hCurrentFont, TRUE);
+                        }
+
+                        // Refresh the window
+                        InvalidateRect(hwnd, NULL, TRUE);
                     }
-                    hPrevFont = (HFONT)SendMessage(hEdit, WM_GETFONT, 0, 0);
-
-                    // Get the current text length
-                    int len = GetWindowTextLength(hEdit);
-                    CHAR *text = (CHAR *)GlobalAlloc(GPTR, (len + 1) * sizeof(CHAR));
-                    GetWindowText(hEdit, text, len + 1);
-
-                    // Create a new edit control with updated word wrap setting
-                    HWND hNewEdit = CreateWindowEx(
-                        0,
-                        "EDIT",
-                        text,
-                        WS_CHILD | WS_VISIBLE | WS_VSCROLL | WS_BORDER | ES_MULTILINE | ES_AUTOVSCROLL | (wordWrap ? ES_WANTRETURN : 0),
-                        0, 0, 0, 0,
-                        hwnd, NULL, GetModuleHandle(NULL), NULL
-                    );
-
-                    if (hNewEdit) {
-                        SendMessage(hNewEdit, WM_SETFONT, (WPARAM)hPrevFont, TRUE);
-                        SetWindowPos(hEdit, hNewEdit, 0, 0, 0, 0, SWP_NOZORDER | SWP_NOMOVE | SWP_NOSIZE);
-                        DestroyWindow(hNewEdit);  // Remove the temporary new control
-                    }
-
-                    GlobalFree(text);
                     break;
+
                 case CHANGE_FONT:
                     CHOOSEFONT cf;  // Structure for font dialog
                     LOGFONT lf = {0};  // Initialize a LOGFONT structure
