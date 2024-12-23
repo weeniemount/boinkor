@@ -30,6 +30,13 @@
   <param name="Local" value="fonter.html">
   <param name="ImageNumber" value="11">
 </OBJECT>
+</UL>
+<LI><OBJECT type="text/sitemap">
+  <param name="Name" value="view menu">
+  <param name="Local" value="view.html">
+  <param name="ImageNumber" value="11">
+</OBJECT>
+<UL>
 <LI><OBJECT type="text/sitemap">
   <param name="Name" value="word wrep">
   <param name="Local" value="wordwrep.html">
